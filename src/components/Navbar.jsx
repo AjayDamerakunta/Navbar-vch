@@ -120,7 +120,7 @@ function Navbar() {
                 }`}
                 style={{ fontFamily: '"Lato", "Open Sans", sans-serif' }}
               >
-                Contacts
+                Contact us
               </Link>
             </div>
           </div>
@@ -296,7 +296,7 @@ function Navbar() {
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Contacts
+                Contact us
               </Link>
 
               {/* For Corporates Mobile Dropdown */}
