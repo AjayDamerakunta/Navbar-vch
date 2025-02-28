@@ -13,6 +13,7 @@ function Navbar() {
   
   const mobileMenuRef = useRef(null);
   const profileMenuRef = useRef(null);
+  const profileTriggerRef = useRef(null);
 
   const location = useLocation();
 
@@ -31,13 +32,26 @@ function Navbar() {
     });
   };
 
-  // Close menus when clicked outside
+  // Improved click outside handler
   useEffect(() => {
     function handleClickOutside(event) {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target) && !event.target.closest('.menu-trigger')) {
+      // For mobile menu
+      if (
+        isMenuOpen &&
+        mobileMenuRef.current && 
+        !mobileMenuRef.current.contains(event.target) && 
+        !event.target.closest('.menu-trigger')
+      ) {
         setIsMenuOpen(false);
       }
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target) && !event.target.closest('.profile-trigger')) {
+      
+      // For profile dropdown - only close if clicking outside both the menu and trigger
+      if (
+        isProfileOpen &&
+        profileMenuRef.current && 
+        !profileMenuRef.current.contains(event.target) && 
+        !profileTriggerRef.current.contains(event.target)
+      ) {
         setIsProfileOpen(false);
       }
     }
@@ -46,15 +60,28 @@ function Navbar() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [isMenuOpen, isProfileOpen]);
 
   // Toggle mobile dropdown
   const toggleMobileDropdown = (dropdown) => {
     setIsMobileDropdownOpen(isMobileDropdownOpen === dropdown ? null : dropdown);
   };
 
+  // Prevent body scrolling when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isMenuOpen]);
+
   return (
-    <nav className="bg-white shadow-md relative z-50">
+    <nav className="bg-white shadow-md fixed top-0 left-0 right-0 z-50">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Left side - Logo and main links */}
@@ -93,7 +120,7 @@ function Navbar() {
                 }`}
                 style={{ fontFamily: '"Lato", "Open Sans", sans-serif' }}
               >
-                Contacts
+                Contact us
               </Link>
             </div>
           </div>
@@ -167,10 +194,13 @@ function Navbar() {
 
             {/* Profile Section - Desktop and Tablet */}
             <div
+              ref={profileTriggerRef}
               className="relative profile-trigger"
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
-              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 hover:bg-sky-300 transition-colors">
+              <button 
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 hover:bg-sky-300 transition-colors"
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+              >
                 <FaUser className="h-4 w-4 text-gray-600 hover:text-sky-500 transition-colors" />
               </button>
 
@@ -178,6 +208,7 @@ function Navbar() {
                 <div 
                   ref={profileMenuRef} 
                   className="absolute right-0 mt-2 w-64 sm:w-72 md:w-80 bg-white rounded-md shadow-lg py-4 px-4 z-20"
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <form onSubmit={handleProfileSubmit} className="space-y-4">
                     <div className="relative">
@@ -209,10 +240,10 @@ function Navbar() {
                       />
                     </div>
                     <div className="flex justify-between">
-                      <Link to="/login" className="text-sm text-blue-600 hover:text-blue-800" onClick={() => setIsProfileOpen(false)}>
+                      <Link to="/login" className="text-sm text-blue-600 hover:text-blue-800" onClick={(e) => e.stopPropagation()}>
                         Login
                       </Link>
-                      <Link to="/register" className="text-sm text-blue-600 hover:text-blue-800" onClick={() => setIsProfileOpen(false)}>
+                      <Link to="/register" className="text-sm text-blue-600 hover:text-blue-800" onClick={(e) => e.stopPropagation()}>
                         Register
                       </Link>
                     </div>
@@ -227,57 +258,10 @@ function Navbar() {
         {isMenuOpen && (
           <div 
             ref={mobileMenuRef}
-            className="md:hidden fixed top-16 left-0 right-0 bg-white shadow-lg min-h-screen overflow-y-auto z-50"
+            className="md:hidden fixed top-16 left-0 right-0 bg-white shadow-lg overflow-y-auto z-50"
+            style={{ maxHeight: 'calc(100vh - 4rem)', height: 'auto' }}
           >
             <div className="flex flex-col p-4 space-y-4">
-              {/* Profile Section in Mobile Menu */}
-              <div className="pb-4 border-b border-gray-200">
-                <form onSubmit={handleProfileSubmit} className="space-y-4">
-                  <div className="flex items-center mb-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-200 mr-3">
-                      <FaUser className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <span className="text-lg font-medium text-gray-800">Profile</span>
-                  </div>
-                  <div className="relative">
-                    <label htmlFor="mobile-name" className="block text-sm font-medium text-gray-700">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      id="mobile-name"
-                      value={profileData.name}
-                      onChange={handleProfileChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                      placeholder="Enter your name"
-                    />
-                  </div>
-                  <div className="relative">
-                    <label htmlFor="mobile-email" className="block text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      id="mobile-email"
-                      value={profileData.email}
-                      onChange={handleProfileChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm"
-                      placeholder="Enter your email"
-                    />
-                  </div>
-                  <div className="flex justify-between">
-                    <Link to="/login" className="text-sm text-blue-600 hover:text-blue-800" onClick={() => setIsMenuOpen(false)}>
-                      Login
-                    </Link>
-                    <Link to="/register" className="text-sm text-blue-600 hover:text-blue-800" onClick={() => setIsMenuOpen(false)}>
-                      Register
-                    </Link>
-                  </div>
-                </form>
-              </div>
-
               {/* Main Navigation Links */}
               <Link
                 to="/find-experts"
@@ -312,7 +296,7 @@ function Navbar() {
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Contacts
+                Contact us
               </Link>
 
               {/* For Corporates Mobile Dropdown */}
